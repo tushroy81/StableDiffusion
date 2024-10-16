@@ -1,8 +1,8 @@
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
-from utils.unet import ContextUnet
-from utils.diffusion_utilities import *
+from unet import ContextUnet
+from diffusion_utilities import *
 
 # ======================================================================================
 
