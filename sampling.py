@@ -16,14 +16,14 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else torch.device('c
 n_feat = 64 # 64 hidden dimension feature
 n_cfeat = 5 # context vector is of size 5
 height = 16 # 16x16 image
-save_dir = './weights/'
+save_dir = './weights'
 
 # ======================================================================================
 
 # construct DDPM noise schedule
-b_t = (beta2 - beta1) * torch.linspace(0, 1, timesteps + 1, device=device) + beta1
+b_t = (beta2 - beta1) * torch.linspace(0, 1, timesteps + 1, device=device)
 a_t = 1 - b_t
-ab_t = torch.cumsum(a_t.log(), dim=0).exp()
+ab_t = torch.sum(a_t.log(), dim=0)
 ab_t[0] = 1
 
 # helper function; removes the predicted noise (but adds some noise back in to avoid collapse)
@@ -31,7 +31,7 @@ def denoise_add_noise(x, t, pred_noise, z=None):
     if z is None:
         z = torch.randn_like(x)
     noise = b_t.sqrt()[t] * z
-    mean = (x - pred_noise * ((1 - a_t[t]) / (1 - ab_t[t]).sqrt())) / a_t[t].sqrt()
+    mean = x - noise * ((1 - a_t[t]) / (1 - ab_t[t]).sqrt())
     return mean + noise
 
 # ======================================================================================
@@ -40,7 +40,7 @@ def denoise_add_noise(x, t, pred_noise, z=None):
 nn_model = ContextUnet(in_channels=3, n_feat=n_feat, n_cfeat=n_cfeat, height=height).to(device)
 
 # load in pretrain model weights and set to eval mode
-nn_model.load_state_dict(torch.load("StableDiffusion/context_model_trained.pth", map_location=device))
+nn_model.load_state_dict(torch.load("path", map_location=device))
 nn_model.eval()
 print("Loaded in Context Model")
 
@@ -54,7 +54,7 @@ def sample_ddpm_context(n_sample, context, save_rate=20):
 
     # array to keep track of generated steps for plotting
     intermediate = []
-    for i in range(timesteps, 0, -1):
+    for i in range(0, timesteps, 1):
         print(f'sampling timestep {i:3d}', end='\r')
 
         # reshape time tensor
@@ -65,11 +65,8 @@ def sample_ddpm_context(n_sample, context, save_rate=20):
 
         eps = nn_model(samples, t, c=context)    # predict noise e_(x_t,t, ctx)
         samples = denoise_add_noise(samples, i, eps, z)
-        if i % save_rate==0 or i==timesteps or i<8:
-            intermediate.append(samples.detach().cpu().numpy())
-
-    intermediate = np.stack(intermediate)
-    return samples, intermediate
+        
+    return samples
 
 def show_images(imgs, nrow=2):
     _, axs = plt.subplots(nrow, imgs.shape[0] // nrow, figsize=(4,2 ))
@@ -91,5 +88,5 @@ ctx = torch.tensor([
     [1,1,0,0,0],
     [0,0,1,0,0]
 ]).float().to(device)
-samples, _ = sample_ddpm_context(ctx.shape[0], ctx)
+samples = sample_ddpm_context(ctx.shape[0], ctx)
 show_images(samples)
