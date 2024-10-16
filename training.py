@@ -65,7 +65,7 @@ for ep in range(n_epoch):
 
         # randomly mask out c
         context_mask = torch.bernoulli(torch.zeros(c.shape[0]) + 0.9).to(device)
-        c = c * context_mask.unsqueeze(-1)
+        c = c * context_mask.unsqueeze(1)
 
         # perturb data
         noise = torch.randn_like(x)
@@ -81,9 +81,5 @@ for ep in range(n_epoch):
 
         optim.step()
 
-    # save model periodically
-    if ep%4==0 or ep == int(n_epoch-1):
-        if not os.path.exists(save_dir):
-            os.mkdir(save_dir)
-        torch.save(nn_model.state_dict(), save_dir + f"/context_model_{ep}.pth")
-        print('saved model at ' + save_dir + f"/new_context_model_{ep}.pth")
+torch.save(nn_model.state_dict(), save_dir + f"/context_model.pth")
+print('saved model at ' + save_dir + f"/new_context_model.pth")
