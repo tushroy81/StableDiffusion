@@ -35,7 +35,7 @@ ab_t[0] = 1
 
 # helper function: perturbs an image to a specified noise level
 def perturb_input(x, t, noise):
-    return ab_t.sqrt()[t, None, None, None] * noise + (1 - ab_t[t, None, None, None]) * x
+    return ab_t.sqrt()[t, None, None, None] * noise + x
 
 # ======================================================================================
 
@@ -70,7 +70,7 @@ for ep in range(n_epoch):
         x_pert = perturb_input(x, t, noise)
 
         # use network to recover noise
-        pred_noise = nn_model(x_pert, t / timesteps, c=c)
+        pred_noise = nn_model(x_pert, t, c=c)
 
         # loss is mean squared error between the predicted and true noise
         loss = F.mse_loss(pred_noise, noise)
