@@ -31,7 +31,7 @@ def denoise_add_noise(x, t, pred_noise, z=None):
     if z is None:
         z = torch.randn_like(x)
     noise = b_t.sqrt()[t] * z
-    mean = x - noise * ((1 - a_t[t]) / (1 - ab_t[t]).sqrt())
+    mean = (x - noise * ((1 - a_t[t])))/ (1 - ab_t[t]).sqrt()
     return mean + noise
 
 # ======================================================================================
